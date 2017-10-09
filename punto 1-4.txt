@@ -1,6 +1,3 @@
-create tablespace vehicles_fleet datafile
-'datafile.dbf' size 512M,
-'datafile2.dbf' size 512M;
 
 create tablespace GOFAR_TRAVEL datafile
 'datafile1.dbf' size 300M,
