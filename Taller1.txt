@@ -1,0 +1,75 @@
+--2.Punto
+--crear tablespaces
+--a. primero con 1GB y 3 datafile
+CREATE TABLESPACE gofar_travel DATAFILE
+'datafile.dbf' SIZE 300M,
+'datafile1.dbf' SIZE 300M,
+'datafile2.dbf' SIZE 400M;
+
+--b. segundo con 50 MB y 1 datafile
+CREATE TABLESPACE test_purposes DATAFILE
+'datafile4.dbf' SIZE 500M;
+
+--c. tercero undo con 5MB y 1 datafile
+CREATE UNDO TABLESPACE undots1
+  DATAFILE 'undotbs_1a.dbf'
+  SIZE 5M AUTOEXTEND ON
+  RETENTION GUARANTEE;
+
+--3.Punto
+--se establece undots1 en el sistema
+ALTER SYSTEM SET UNDO_TABLESPACE = undots1;
+
+--4. Punto
+--crear usuario DBA
+CREATE USER DBAuser
+IDENTIFIED BY dba1234
+DEFAULT TABLESPACE gofar_travel
+QUOTA UNLIMITED ON gofar_travel;
+
+--5. Punto
+--rol y permiso para DBA
+CREATE ROLE conectar;
+GRANT CONNECT, RESOURCE TO conectar;
+GRANT conectar TO DBAuser;
+
+
+--6. Punto
+--crear 3 perfiles
+--a.Perfil 1: manager
+CREATE PROFILE perfil_manager LIMIT 
+SESSIONS_PER_USER          1
+PASSWORD_LIFE_TIME         40
+IDLE_TIME                  15
+FAILED_LOGIN_ATTEMPTS      4;
+
+
+--b.Perfil 2: finance
+CREATE PROFILE perfil_finance LIMIT 
+SESSIONS_PER_USER          1
+PASSWORD_LIFE_TIME         15
+IDLE_TIME                  3
+FAILED_LOGIN_ATTEMPTS      2;
+
+
+--c.Perfil 3: development
+CREATE PROFILE perfil_development LIMIT 
+SESSIONS_PER_USER          2
+PASSWORD_LIFE_TIME         100
+IDLE_TIME                  30;
+
+
+--7. Punto
+--crear 4 usuarios
+CREATE USER User1
+IDENTIFIED BY User1123
+DEFAULT TABLESPACE gofar_travel
+PROFILE perfil_manager;
+GRANT CONNECT TO User1;
+
+
+CREATE USER User2
+IDENTIFIED BY User2123
+DEFAULT TABLESPACE gofar_travel
+PROFILE perfil_finance;
+GRANT CONNECT TO User2;
