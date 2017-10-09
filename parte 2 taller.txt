@@ -1,7 +1,3 @@
-create tablespace vehicles_fleet datafile
-'datafile.dbf' size 512M,
-'datafile2.dbf' size 512M;
-
 create tablespace GOFAR_TRAVEL datafile
 'datafile1.dbf' size 300M,
 'datafile11.dbf' size 300M,
@@ -29,5 +25,14 @@ CREATE USER DBAuser
 IDENTIFIED BY dba1234
 DEFAULT TABLESPACE gofar_travel
 QUOTA UNLIMITED ON gofar_travel;
+
+--8. Punto
+--bloquear los usuarios con los perfiles manager y finance
+ALTER USER User1 ACCOUNT LOCK;
+ALTER USER User2 ACCOUNT LOCK;
+
+--9. Punto
+--Borrar el tablespace test_purposes 
+DROP TABLESPACE test_purposes INCLUDING CONTENTS AND DATAFILES
 
 
