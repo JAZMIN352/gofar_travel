@@ -1,0 +1,177 @@
+
+
+--------------------------------TALLER 2--------------------------------------------
+--Correcciones Taller 1--
+
+--Tabla clientes
+CREATE TABLE Clientes 
+(
+    ID NUMBER NOT NULL,
+    Cedula_Ciudadania VARCHAR(15) NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    Direccion VARCHAR(60) NOT NULL,
+    Telefono VARCHAR(30) NOT NULL,
+    
+	CONSTRAINT PK_Clientes PRIMARY KEY (ID)
+);
+
+CREATE SEQUENCE Clientes_Sequence START WITH 1 INCREMENT BY 1;
+
+GRANT SELECT, INSERT, DELETE, UPDATE ON Clientes TO DBAUSER;
+
+--Tabla vendedores
+CREATE TABLE Vendedores
+(
+    ID NUMBER NOT NULL,
+    Cedula_Ciudadania VARCHAR(15) NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    Direccion VARCHAR(60) NOT NULL,
+    Telefono VARCHAR(30) NOT NULL,
+    
+	CONSTRAINT PK_Vendedores PRIMARY KEY (ID)
+);
+
+CREATE SEQUENCE Vendedores_Sequence START WITH 1 INCREMENT BY 1;
+
+GRANT SELECT, INSERT, DELETE, UPDATE ON Vendedores TO DBAUSER;
+--Tabla fabricantes
+CREATE TABLE Fabricantes
+(
+    ID NUMBER NOT NULL,
+    Cedula_Ciudadania VARCHAR(15) NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    Direccion VARCHAR(60) NOT NULL,
+    Telefono VARCHAR(30) NOT NULL,
+    
+	CONSTRAINT PK_Fabricantes PRIMARY KEY (ID)
+);
+
+CREATE SEQUENCE Fabricantes_Sequence START WITH 1 INCREMENT BY 1;
+
+GRANT SELECT, INSERT, DELETE, UPDATE ON Fabricantes TO DBAUSER;
+--Tabla extras
+CREATE TABLE Extras
+(
+    ID NUMBER NOT NULL,
+    CodExtra VARCHAR(15) NOT NULL,
+    Descripcion VARCHAR(100) NOT NULL,
+    Costo_Venta DECIMAL(12,2) NOT NULL,
+    Unidades_Disponibles NUMBER DEFAULT 30,
+	CONSTRAINT PK_Extras PRIMARY KEY (ID)
+ 	
+);
+
+CREATE SEQUENCE Extras_Sequence START WITH 1 INCREMENT BY 1;
+
+GRANT SELECT, INSERT, DELETE, UPDATE ON Extras TO DBAUSER;
+--Tabla vehi_cambio
+CREATE TABLE Vehi_Cambio
+(
+    ID NUMBER NOT NULL,
+    Num_Serial VARCHAR(15) NOT NULL,
+    Hechura VARCHAR(100) NOT NULL,
+    Modelo VARCHAR(50) NOT NULL,
+    Ano NUMBER(4) NOT NULL,
+    Costo_Permitido DECIMAL(12,2) NOT NULL,
+	CONSTRAINT PK_Vehi_Cambio PRIMARY KEY (ID)
+ 	
+);
+
+CREATE SEQUENCE Vehi_Cambio_Sequence START WITH 1 INCREMENT BY 1;
+
+GRANT SELECT, INSERT, DELETE, UPDATE ON Vehi_Cambio TO DBAUSER;
+
+--Tabla vehiculos
+CREATE TABLE Vehiculos
+(
+    ID NUMBER NOT NULL,
+    VIN VARCHAR(15) NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    Modelo VARCHAR(60) NOT NULL,
+    Ano NUMBER(4) NOT NULL,
+    Estado VARCHAR(10) NOT NULL,
+	CONSTRAINT PK_Vehiculos PRIMARY KEY (ID),
+  CONSTRAINT CK_estado_vehiculos CHECK (Estado in ('Nuevo', 'Usado'))
+);
+
+CREATE SEQUENCE Vehiculos_Sequence START WITH 1 INCREMENT BY 1;
+
+GRANT SELECT, INSERT, DELETE, UPDATE ON Vehiculos TO DBAUSER;
+
+
+--Tabla costoextra_fabricante
+CREATE TABLE CostoExtra_Fabricante
+(
+    ID NUMBER (38) NOT NULL,
+    IdExtra NUMBER NOT NULL,
+    IdFabricante NUMBER NOT NULL,
+    Costo DECIMAL(12,2) NOT NULL,
+  CONSTRAINT PK_CostoExtra_Fabricante PRIMARY KEY (ID),
+ 	CONSTRAINT FK_CostoExtra_Fab_Extra FOREIGN KEY (IdExtra) REFERENCES Extras(ID),
+	CONSTRAINT FK_CostoExtra_Fab_Fab FOREIGN KEY (IdFabricante) REFERENCES Fabricantes(ID)
+);
+
+CREATE SEQUENCE CostoExtra_Fabricante_Sequence START WITH 1 INCREMENT BY 1;
+
+GRANT SELECT, INSERT, DELETE, UPDATE ON CostoExtra_Fabricante TO DBAUSER;
+
+--Tabla costo_fabricante
+CREATE TABLE Costo_Fabricante
+(
+    ID NUMBER NOT NULL,
+    IdVehiculo NUMBER NOT NULL,
+    IdFabricante NUMBER NOT NULL,
+    Costo DECIMAL(12,2) NOT NULL,
+  CONSTRAINT PK_Costo_Fabricante PRIMARY KEY (ID),
+ 	CONSTRAINT FK_Costo_Fab_Veh FOREIGN KEY (IdVehiculo) REFERENCES Vehiculos(ID),
+	CONSTRAINT FK_Costo_Fab_Fab FOREIGN KEY (IdFabricante) REFERENCES Fabricantes(ID)
+);
+
+CREATE SEQUENCE Costo_Fabricante_Sequence START WITH 1 INCREMENT BY 1;
+
+
+GRANT SELECT, INSERT, DELETE, UPDATE ON Costo_Fabricante TO DBAUSER;
+--Tabla facturas
+CREATE TABLE Facturas
+(
+    ID NUMBER NOT NULL,
+    Num_Factura VARCHAR (10) NOT NULL,
+    Fecha_Factura DATE NOT NULL,
+    Impuestos DECIMAL(12,2) NOT NULL,
+    Tarifas_Licencia DECIMAL(12,2) NOT NULL,
+    Valor_Restante DECIMAL(12,2) NOT NULL,
+    Fecha_Compra DATE NOT NULL,
+    Fecha_Venta DATE NOT NULL,
+    Estado VARCHAR(10) NOT NULL,
+    IdCliente NUMBER NOT NULL,
+    IdVendedor NUMBER NOT NULL,
+  CONSTRAINT PK_Facturas PRIMARY KEY (ID),
+ 	CONSTRAINT FK_Facturas_Cliente FOREIGN KEY (IdCliente) REFERENCES Clientes(ID),
+	CONSTRAINT FK_Facturas_Vendedor FOREIGN KEY (IdVendedor) REFERENCES Vendedores(ID),
+  CONSTRAINT CK_Estado_Facturas CHECK (Estado in ('Nuevo', 'Cambiado', 'Vendido'))
+  );
+
+CREATE SEQUENCE Facturas_Sequence START WITH 1 INCREMENT BY 1;
+
+
+GRANT SELECT, INSERT, DELETE, UPDATE ON Facturas TO DBAUSER;
+--Tabla facturas_detalle
+CREATE TABLE Facturas_Detalle
+(
+    ID NUMBER NOT NULL,
+    IdFactura NUMBER NOT NULL,
+    IdExtra NUMBER NOT NULL,
+    Costo_Total DECIMAL(12,2) NOT NULL,
+    Firma VARCHAR(50) NOT NULL,
+    IdVehiculo NUMBER NOT NULL,
+    IdVehiCambio NUMBER NOT NULL,
+  CONSTRAINT PK_Facturas_Detalle PRIMARY KEY (ID),
+ 	CONSTRAINT FK_Facturas_Detalle_Factura FOREIGN KEY (IdFactura) REFERENCES Facturas(ID),
+	CONSTRAINT FK_Facturas_Detalle_Extra FOREIGN KEY (IdExtra) REFERENCES Extras(ID),
+  CONSTRAINT FK_Facturas_Det_Veh FOREIGN KEY (IdVehiculo) REFERENCES Vehiculos(ID),
+	CONSTRAINT FK_Facturas_Det_IdVehiCam FOREIGN KEY (IdVehiCambio) REFERENCES Vehi_Cambio(ID)
+);
+
+CREATE SEQUENCE Facturas_Detalle_Sequence START WITH 1 INCREMENT BY 1;
+
+GRANT SELECT, INSERT, DELETE, UPDATE ON Facturas_Detalle TO DBAUSER;
