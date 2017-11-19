@@ -46,32 +46,6 @@ CREATE TABLE Fabricantes
 	CONSTRAINT PK_Fabricantes PRIMARY KEY (ID)
 );
 
-----Punto 3
-CREATE OR REPLACE VIEW unidades_disponibles AS
-	SELECT EXTRAS.id, EXTRAS.CodExtra, FABRICANTES.CEDULA_CIUDADANIA, FABRICANTES.NOMBRE
-	FROM COSTOEXTRA_FABRICANTE INNER JOIN EXTRAS ON COSTOEXTRA_FABRICANTE.IDEXTRA = EXTRAS.ID INNER JOIN 
-  FABRICANTES ON COSTOEXTRA_FABRICANTE.IDEXTRA= FABRICANTES.ID
-	WHERE unidades_disponibles < 5;
-  
---4 Punto
---Trigger donde disminuya las unidades disponibles de extras
-
-GRANT CREATE TRIGGER TO SYSTEM;
-GRANT CREATE ANY TRIGGER TO SYSTEM;
-GRANT CREATE TRIGGER TO DBAuser;
-GRANT CREATE ANY TRIGGER TO DBAuser;
-
-GRANT ADMINISTER DATABASE TRIGGER TO SYSTEM;
-GRANT ADMINISTER DATABASE TRIGGER TO DBAuser;
-CREATE OR REPLACE TRIGGER Decremento_Extras
-AFTER INSERT ON Facturas_Detalle
-FOR EACH ROW
-BEGIN
-UPDATE Extras
-SET Unidades_Disponibles = Unidades_Disponibles - 1
-WHERE :new.ID = id;
-END;
-
 
 CREATE SEQUENCE Fabricantes_Sequence START WITH 1 INCREMENT BY 1;
 
@@ -202,3 +176,91 @@ CREATE TABLE Facturas_Detalle
 CREATE SEQUENCE Facturas_Detalle_Sequence START WITH 1 INCREMENT BY 1;
 
 GRANT SELECT, INSERT, DELETE, UPDATE ON Facturas_Detalle TO DBAUSER;
+
+
+----Punto 3
+CREATE OR REPLACE VIEW unidades_disponibles AS
+	SELECT EXTRAS.id, EXTRAS.CodExtra, FABRICANTES.CEDULA_CIUDADANIA, FABRICANTES.NOMBRE
+	FROM COSTOEXTRA_FABRICANTE INNER JOIN EXTRAS ON COSTOEXTRA_FABRICANTE.IDEXTRA = EXTRAS.ID INNER JOIN 
+  FABRICANTES ON COSTOEXTRA_FABRICANTE.IDEXTRA= FABRICANTES.ID
+	WHERE unidades_disponibles < 5;
+  
+--4 Punto
+--Trigger donde disminuya las unidades disponibles de extras
+
+GRANT CREATE TRIGGER TO SYSTEM;
+GRANT CREATE ANY TRIGGER TO SYSTEM;
+GRANT CREATE TRIGGER TO DBAuser;
+GRANT CREATE ANY TRIGGER TO DBAuser;
+
+GRANT ADMINISTER DATABASE TRIGGER TO SYSTEM;
+GRANT ADMINISTER DATABASE TRIGGER TO DBAuser;
+CREATE OR REPLACE TRIGGER Decremento_Extras
+AFTER INSERT ON Facturas_Detalle
+FOR EACH ROW
+BEGIN
+UPDATE Extras
+SET Unidades_Disponibles = Unidades_Disponibles - 1
+WHERE :new.ID = id;
+END;
+
+--5 punto
+--procedimiento que llame a la vista, esta retorna valores por debajo de
+--las 5 unidades a las cuales se les debe colocar el valor 20 por defecto
+GRANT CREATE PROCEDURE TO SYSTEM;
+GRANT CREATE ANY PROCEDURE TO SYSTEM;
+GRANT ALTER ANY PROCEDURE TO SYSTEM;
+GRANT CREATE PROCEDURE TO DBAuser;
+GRANT CREATE ANY PROCEDURE TO DBAuser;
+GRANT ALTER ANY PROCEDURE TO DBAuser;
+
+CREATE OR REPLACE PROCEDURE Reordenar_Unidades_Extras AS
+BEGIN
+UPDATE Extras
+SET Unidades_Disponibles = Unidades_Disponibles + 20
+WHERE Extras.id in (select id from unidades_disponibles);
+END;
+--Colocando 20 por defecto
+CREATE OR REPLACE PROCEDURE Reordenar_Unidades_Extras AS
+BEGIN
+UPDATE Extras
+SET Unidades_Disponibles = 20
+WHERE Extras.id in (select id from unidades_disponibles);
+END;
+exec Reordenar_Unidades_Extras;
+
+
+--6 Punto
+--crear vista 
+CREATE OR REPLACE VIEW Informacion_Venta AS
+SELECT
+f.id Id_Factura, vendedor.id Id_Vendedor, vendedor.nombre Vendedor, cliente.id Id_Cliente,
+cliente.nombre Cliente,vehiculo.id Id_Vehiculo, vehiculo.marca Marca_Vehiculo,
+vehiculo.fabricante Vehiculo_Fabricante, accesorio.id Id_Accesorio,
+accesorio.descripcion Nombre_Accesorio
+FROM Facturas f 
+LEFT JOIN Vendedores vendedor on f.id_vendedor = vendedor.id
+LEFT JOIN Clientes cliente on f.id_cliente = cliente.id
+LEFT JOIN Vehiculos vehiculo on f.id_vehiculo = vehiculo.id
+LEFT JOIN Facturas_Detalle d on d.id_factura = f.id
+LEFT JOIN Extras accesorio on d.id_accesorio = accesorio.id
+
+SELECT * FROM Informacion_Venta
+WHERE Id_Factura = 20
+
+--7 punto
+EXPLAIN PLAN SET STATEMENT_ID = 'Informacion_Venta_Gofar' FOR
+SELECT
+f.id Id_Factura, vendedor.id Id_Vendedor, vendedor.nombre Vendedor, cliente.id Id_Cliente,
+cliente.nombre Cliente,vehiculo.id Id_Vehiculo, vehiculo.marca Marca_Vehiculo,
+vehiculo.fabricante Vehiculo_Fabricante, accesorio.id Id_Accesorio,
+accesorio.descripcion Nombre_Accesorio
+FROM Facturas f 
+LEFT JOIN Vendedores vendedor on f.id_vendedor = vendedor.id
+LEFT JOIN Clientes cliente on f.id_cliente = cliente.id
+LEFT JOIN Vehiculos vehiculo on f.id_vehiculo = vehiculo.id
+LEFT JOIN Facturas_Detalle d on d.id_factura = f.id
+LEFT JOIN Extras accesorio on d.id_accesorio = accesorio.id
+
+SELECT * FROM TABLE (DBMS_XPLAN.DISPLAY('PLAN_TABLE', 'Informacion_Venta_Gofar',
+'TYPICAL') );
